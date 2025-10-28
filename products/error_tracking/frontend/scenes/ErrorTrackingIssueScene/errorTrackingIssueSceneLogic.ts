@@ -2,6 +2,7 @@ import { actions, connect, defaults, events, kea, key, listeners, path, props, r
 import { loaders } from 'kea-loaders'
 import { router } from 'kea-router'
 import { subscriptions } from 'kea-subscriptions'
+import posthog from 'posthog-js'
 
 import api from 'lib/api'
 import { ErrorEventProperties, ErrorEventType, ErrorTrackingFingerprint } from 'lib/components/Errors/types'
@@ -367,11 +368,21 @@ export const errorTrackingIssueSceneLogic = kea<errorTrackingIssueSceneLogicType
                     actions.loadIssueFingerprints()
                 }
             },
+            createExternalReferenceSuccess: ({ issue }) => {
+                if (issue && issue.external_issues && issue.external_issues.length > 0) {
+                    const latestExternalIssue = issue.external_issues[issue.external_issues.length - 1]
+                    posthog.capture('error_tracking_external_issue_created', {
+                        issue_id: props.id,
+                        integration_kind: latestExternalIssue.integration.kind,
+                    })
+                }
+            },
         }
     }),
 
     events(({ props, actions }) => ({
         afterMount: () => {
+            posthog.capture('error_tracking_issue_viewed', { issue_id: props.id })
             actions.loadIssue()
             actions.setInitialEventTimestamp(props.timestamp ?? null)
             actions.loadSummary()

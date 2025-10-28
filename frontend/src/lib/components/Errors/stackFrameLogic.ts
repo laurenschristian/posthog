@@ -1,5 +1,6 @@
-import { actions, kea, path } from 'kea'
+import { actions, kea, listeners, path } from 'kea'
 import { loaders } from 'kea-loaders'
+import posthog from 'posthog-js'
 
 import api from 'lib/api'
 
@@ -49,5 +50,16 @@ export const stackFrameLogic = kea<stackFrameLogicType>([
                 },
             },
         ],
+    })),
+
+    listeners(() => ({
+        loadFromRawIdsSuccess: ({ stackFrameRecords }) => {
+            const recordsWithContext = Object.values(stackFrameRecords).filter((record) => record.context)
+            if (recordsWithContext.length > 0) {
+                posthog.capture('error_tracking_source_code_resolved', {
+                    frames_count: recordsWithContext.length,
+                })
+            }
+        },
     })),
 ])

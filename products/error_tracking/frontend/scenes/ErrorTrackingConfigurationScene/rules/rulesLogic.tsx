@@ -1,5 +1,6 @@
 import { actions, kea, key, listeners, path, props, reducers, selectors } from 'kea'
 import { loaders } from 'kea-loaders'
+import posthog from 'posthog-js'
 
 import api from 'lib/api'
 
@@ -124,6 +125,16 @@ export const rulesLogic = kea<rulesLogicType>([
         },
         saveRuleSuccess: ({ payload: id }) => {
             const localRules = [...values.localRules]
+            const savedRule = localRules.find((v) => v.id === id)
+            if (savedRule && id === 'new') {
+                const eventName =
+                    props.ruleType === 'assignment_rules'
+                        ? 'error_tracking_assignment_rule_created'
+                        : props.ruleType === 'grouping_rules'
+                          ? 'error_tracking_grouping_rule_created'
+                          : 'error_tracking_suppression_rule_created'
+                posthog.capture(eventName, { rule_type: props.ruleType })
+            }
             const newEditingRules = localRules.filter((v) => v.id !== id)
             actions._setLocalRules(newEditingRules)
         },
