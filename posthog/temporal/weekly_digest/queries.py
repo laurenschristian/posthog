@@ -11,7 +11,8 @@ from posthog.models.organization import OrganizationMembership
 from posthog.models.surveys.survey import Survey
 from posthog.models.team import Team
 from posthog.sync import database_sync_to_async
-from posthog.warehouse.models.external_data_source import ExternalDataSource
+
+from products.data_warehouse.backend.models.external_data_source import ExternalDataSource
 
 
 def query_teams_for_digest() -> QuerySet:
