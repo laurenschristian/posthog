@@ -3528,6 +3528,8 @@ export interface TracesQuery extends DataNode<TracesQueryResponse> {
     properties?: AnyPropertyFilter[]
     /** Person who performed the event */
     personId?: string
+    groupKey?: string
+    groupTypeIndex?: integer
 }
 
 export interface TraceQueryResponse extends AnalyticsQueryResponseBase {
