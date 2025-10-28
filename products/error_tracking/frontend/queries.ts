@@ -6,6 +6,7 @@ import {
     ErrorTrackingQuery,
     ErrorTrackingSimilarIssuesQuery,
     EventsQuery,
+    HogQLQuery,
     InsightVizNode,
     NodeKind,
 } from '~/queries/schema/schema-general'
@@ -288,4 +289,48 @@ export const errorTrackingIssueBreakdownQuery = ({
     }
 
     return query
+}
+
+export const errorTrackingIssueBatchedBreakdownQuery = ({
+    breakdownProperties,
+    dateRange,
+    filterTestAccounts,
+    issueId,
+}: {
+    breakdownProperties: string[]
+    dateRange: DateRange
+    filterTestAccounts: boolean
+    issueId: string
+}): HogQLQuery => {
+    // Build UNION ALL query for each breakdown property to get top N values per property
+    const subqueries = breakdownProperties
+        .map((property) => {
+            const testAccountFilter = filterTestAccounts
+                ? "AND not(coalesce(person.properties.email LIKE '%@posthog.com', false) OR coalesce(person.properties.email LIKE '%@example.com', false))"
+                : ''
+
+            return `
+        SELECT 
+            '${property.replace(/'/g, "\\'")}' as breakdown_property,
+            ifNull(toString(properties.${property}), '$$_posthog_breakdown_null_$$') as breakdown_value,
+            count() as count
+        FROM events
+        WHERE 
+            event = '$exception'
+            AND properties.\`$exception_issue_id\` = '${issueId.replace(/'/g, "\\'")}'
+            ${testAccountFilter}
+        GROUP BY breakdown_value
+        ORDER BY count DESC
+        LIMIT ${LIMIT_ITEMS}
+    `
+        })
+        .join('\nUNION ALL\n')
+
+    return {
+        kind: NodeKind.HogQLQuery,
+        query: subqueries,
+        filters: {
+            dateRange,
+        },
+    }
 }
