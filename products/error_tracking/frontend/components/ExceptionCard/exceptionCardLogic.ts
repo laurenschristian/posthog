@@ -1,4 +1,5 @@
-import { actions, kea, key, path, props, reducers } from 'kea'
+import { actions, kea, key, listeners, path, props, reducers } from 'kea'
+import posthog from 'posthog-js'
 
 import type { exceptionCardLogicType } from './exceptionCardLogicType'
 
@@ -19,6 +20,7 @@ export const exceptionCardLogic = kea<exceptionCardLogicType>([
         setLoading: (loading: boolean) => ({ loading }),
         setCurrentSessionTab: (tab: string) => ({ tab }),
         setCurrentTab: (tab: string) => ({ tab }),
+        markStacktraceExplored: true,
     }),
 
     reducers({
@@ -65,4 +67,10 @@ export const exceptionCardLogic = kea<exceptionCardLogicType>([
             },
         ],
     }),
+
+    listeners(({ props }) => ({
+        markStacktraceExplored: () => {
+            posthog.capture('error_tracking_stacktrace_explored', { issue_id: props.issueId })
+        },
+    })),
 ])

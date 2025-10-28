@@ -1,4 +1,4 @@
-import { useValues } from 'kea'
+import { useActions, useValues } from 'kea'
 import { useCallback } from 'react'
 
 import { LemonSkeleton } from '@posthog/lemon-ui'
@@ -22,6 +22,7 @@ export function StacktraceGenericDisplay({
 }: StacktraceBaseDisplayProps): JSX.Element {
     const { exceptionAttributes, hasStacktrace } = useValues(errorPropertiesLogic)
     const { loading, showAllFrames } = useValues(exceptionCardLogic)
+    const { markStacktraceExplored } = useActions(exceptionCardLogic)
     const { runtime } = exceptionAttributes || {}
     const renderExceptionHeader = useCallback(
         ({ type, value, loading, part }: ExceptionHeaderProps): JSX.Element => {
@@ -47,6 +48,7 @@ export function StacktraceGenericDisplay({
                     showAllFrames={showAllFrames}
                     renderExceptionHeader={renderExceptionHeader}
                     onFrameContextClick={(_, e) => cancelEvent(e)}
+                    onFirstFrameExpanded={markStacktraceExplored}
                 />
             )}
             {!loading && !hasStacktrace && renderEmpty()}
