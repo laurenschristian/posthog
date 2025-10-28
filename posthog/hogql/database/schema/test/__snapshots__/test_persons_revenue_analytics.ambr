@@ -913,7 +913,6 @@
   SELECT arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1))) AS date,
          arrayMap(d -> arraySum(arrayMap((v, dd) -> if(ifNull(equals(dd, d), isNull(dd)
                                                               and isNull(d)), v, 0), vals, days)), arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1)))) AS total,
-         arraySum(vals) AS grand_total,
          breakdown_value AS breakdown_value
   FROM
     (SELECT groupArray(top_n_and_other_breakdown_values.day_start) AS days,
@@ -936,8 +935,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1026,8 +1025,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1108,8 +1107,7 @@
                        ranked_breakdown_values.day_start) AS other_breakdown_values)
         ORDER BY day_start ASC, value ASC) AS top_n_and_other_breakdown_values
      GROUP BY top_n_and_other_breakdown_values.breakdown_value)
-  ORDER BY ifNull(equals(breakdown_value, ['$$_posthog_breakdown_other_$$']), isNull(breakdown_value)
-                  and isNull(['$$_posthog_breakdown_other_$$'])) ASC, grand_total DESC
+  ORDER BY if(has(breakdown_value, '$$_posthog_breakdown_other_$$'), 2, if(has(breakdown_value, '$$_posthog_breakdown_null_$$'), 1, 0)) ASC, arraySum(vals) DESC, breakdown_value ASC
   LIMIT 50000 SETTINGS readonly=2,
                        max_execution_time=60,
                        allow_experimental_object_type=1,
@@ -1144,7 +1142,6 @@
   SELECT arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1))) AS date,
          arrayMap(d -> arraySum(arrayMap((v, dd) -> if(ifNull(equals(dd, d), isNull(dd)
                                                               and isNull(d)), v, 0), vals, days)), arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1)))) AS total,
-         arraySum(vals) AS grand_total,
          breakdown_value AS breakdown_value
   FROM
     (SELECT groupArray(top_n_and_other_breakdown_values.day_start) AS days,
@@ -1167,8 +1164,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1235,8 +1232,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1295,8 +1292,7 @@
                        ranked_breakdown_values.day_start) AS other_breakdown_values)
         ORDER BY day_start ASC, value ASC) AS top_n_and_other_breakdown_values
      GROUP BY top_n_and_other_breakdown_values.breakdown_value)
-  ORDER BY ifNull(equals(breakdown_value, ['$$_posthog_breakdown_other_$$']), isNull(breakdown_value)
-                  and isNull(['$$_posthog_breakdown_other_$$'])) ASC, grand_total DESC
+  ORDER BY if(has(breakdown_value, '$$_posthog_breakdown_other_$$'), 2, if(has(breakdown_value, '$$_posthog_breakdown_null_$$'), 1, 0)) ASC, arraySum(vals) DESC, breakdown_value ASC
   LIMIT 50000 SETTINGS readonly=2,
                        max_execution_time=60,
                        allow_experimental_object_type=1,
@@ -1331,7 +1327,6 @@
   SELECT arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1))) AS date,
          arrayMap(d -> arraySum(arrayMap((v, dd) -> if(ifNull(equals(dd, d), isNull(dd)
                                                               and isNull(d)), v, 0), vals, days)), arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1)))) AS total,
-         arraySum(vals) AS grand_total,
          breakdown_value AS breakdown_value
   FROM
     (SELECT groupArray(top_n_and_other_breakdown_values.day_start) AS days,
@@ -1354,8 +1349,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1436,8 +1431,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1510,8 +1505,7 @@
                        ranked_breakdown_values.day_start) AS other_breakdown_values)
         ORDER BY day_start ASC, value ASC) AS top_n_and_other_breakdown_values
      GROUP BY top_n_and_other_breakdown_values.breakdown_value)
-  ORDER BY ifNull(equals(breakdown_value, ['$$_posthog_breakdown_other_$$']), isNull(breakdown_value)
-                  and isNull(['$$_posthog_breakdown_other_$$'])) ASC, grand_total DESC
+  ORDER BY if(has(breakdown_value, '$$_posthog_breakdown_other_$$'), 2, if(has(breakdown_value, '$$_posthog_breakdown_null_$$'), 1, 0)) ASC, arraySum(vals) DESC, breakdown_value ASC
   LIMIT 50000 SETTINGS readonly=2,
                        max_execution_time=60,
                        allow_experimental_object_type=1,
@@ -1546,7 +1540,6 @@
   SELECT arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1))) AS date,
          arrayMap(d -> arraySum(arrayMap((v, dd) -> if(ifNull(equals(dd, d), isNull(dd)
                                                               and isNull(d)), v, 0), vals, days)), arrayMap(number -> plus(toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toIntervalDay(number)), range(0, plus(coalesce(dateDiff('day', toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 00:00:00', 'UTC')), toIntervalDay(1)), toStartOfInterval(assumeNotNull(toDateTime('2025-05-30 23:59:59', 'UTC')), toIntervalDay(1)))), 1)))) AS total,
-         arraySum(vals) AS grand_total,
          breakdown_value AS breakdown_value
   FROM
     (SELECT groupArray(top_n_and_other_breakdown_values.day_start) AS days,
@@ -1569,8 +1562,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1658,8 +1651,8 @@
                                  day_start AS day_start,
                                  breakdown_value AS breakdown_value,
                                  total_count_for_breakdown AS total_count_for_breakdown,
-                                 denseRank() OVER (
-                                                   ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
+                                 row_number() OVER (PARTITION BY day_start
+                                                    ORDER BY total_count_for_breakdown DESC) AS breakdown_rank
                  FROM
                    (SELECT sum(total) AS count,
                            day_start AS day_start,
@@ -1739,8 +1732,7 @@
                        ranked_breakdown_values.day_start) AS other_breakdown_values)
         ORDER BY day_start ASC, value ASC) AS top_n_and_other_breakdown_values
      GROUP BY top_n_and_other_breakdown_values.breakdown_value)
-  ORDER BY ifNull(equals(breakdown_value, ['$$_posthog_breakdown_other_$$']), isNull(breakdown_value)
-                  and isNull(['$$_posthog_breakdown_other_$$'])) ASC, grand_total DESC
+  ORDER BY if(has(breakdown_value, '$$_posthog_breakdown_other_$$'), 2, if(has(breakdown_value, '$$_posthog_breakdown_null_$$'), 1, 0)) ASC, arraySum(vals) DESC, breakdown_value ASC
   LIMIT 50000 SETTINGS readonly=2,
                        max_execution_time=60,
                        allow_experimental_object_type=1,
