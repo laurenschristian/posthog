@@ -1,13 +1,15 @@
 import { useActions, useValues } from 'kea'
 import { useState } from 'react'
 
-import { IconBolt } from '@posthog/icons'
+import { IconBolt, IconShare } from '@posthog/icons'
+import { LemonButton } from '@posthog/lemon-ui'
 
 import { FEATURE_FLAGS } from 'lib/constants'
 import { LemonSwitch } from 'lib/lemon-ui/LemonSwitch'
 import { LemonTag } from 'lib/lemon-ui/LemonTag'
 import { Popover } from 'lib/lemon-ui/Popover'
 import { featureFlagLogic } from 'lib/logic/featureFlagLogic'
+import { copyToClipboard } from 'lib/utils/copyToClipboard'
 import { teamLogic } from 'scenes/teamLogic'
 import { WebAnalyticsMenu } from 'scenes/web-analytics/WebAnalyticsMenu'
 
@@ -27,6 +29,10 @@ export function WebAnalyticsHeaderButtons(): JSX.Element {
                 useWebAnalyticsPreAggregatedTables: checked,
             },
         })
+    }
+
+    const handleShare = (): void => {
+        void copyToClipboard(window.location.href, 'link')
     }
 
     return (
@@ -95,6 +101,15 @@ export function WebAnalyticsHeaderButtons(): JSX.Element {
                     </div>
                 </Popover>
             )}
+            <LemonButton
+                type="secondary"
+                size="small"
+                icon={<IconShare />}
+                onClick={handleShare}
+                data-attr="web-analytics-share-button"
+            >
+                Share
+            </LemonButton>
             <WebAnalyticsMenu />
         </div>
     )
