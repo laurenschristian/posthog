@@ -91,7 +91,7 @@ class ErrorTrackingBreakdownsQueryRunner(AnalyticsQueryRunner[ErrorTrackingBreak
                     ),
                 ),
             ],
-            select_from=ast.JoinExpr(table=ast.SelectQuery.model_validate(innermost_select)),
+            select_from=ast.JoinExpr(table=innermost_select),
         )
 
         # Third level: group by and count
@@ -102,15 +102,16 @@ class ErrorTrackingBreakdownsQueryRunner(AnalyticsQueryRunner[ErrorTrackingBreak
                 ast.Alias(alias="count", expr=ast.Call(name="count", args=[])),
                 ast.Alias(
                     alias="total_count",
-                    expr=ast.WindowExpr(
+                    expr=ast.Call(
+                        name="sum",
+                        args=[ast.Call(name="count", args=[])],
                         over_expr=ast.WindowExpr(
                             partition_by=[ast.Field(chain=["breakdown_property"])],
                         ),
-                        fun=ast.Call(name="sum", args=[ast.Call(name="count", args=[])]),
                     ),
                 ),
             ],
-            select_from=ast.JoinExpr(table=ast.SelectQuery.model_validate(second_select)),
+            select_from=ast.JoinExpr(table=second_select),
             group_by=[ast.Field(chain=["breakdown_property"]), ast.Field(chain=["breakdown_value"])],
         )
 
@@ -123,16 +124,17 @@ class ErrorTrackingBreakdownsQueryRunner(AnalyticsQueryRunner[ErrorTrackingBreak
                 ast.Field(chain=["total_count"]),
                 ast.Alias(
                     alias="rn",
-                    expr=ast.WindowExpr(
+                    expr=ast.Call(
+                        name="row_number",
+                        args=[],
                         over_expr=ast.WindowExpr(
                             partition_by=[ast.Field(chain=["breakdown_property"])],
                             order_by=[ast.OrderExpr(expr=ast.Field(chain=["count"]), order="DESC")],
                         ),
-                        fun=ast.Call(name="row_number", args=[]),
                     ),
                 ),
             ],
-            select_from=ast.JoinExpr(table=ast.SelectQuery.model_validate(third_select)),
+            select_from=ast.JoinExpr(table=third_select),
         )
 
         # Final select: filter by row number limit
@@ -144,7 +146,7 @@ class ErrorTrackingBreakdownsQueryRunner(AnalyticsQueryRunner[ErrorTrackingBreak
                 ast.Field(chain=["count"]),
                 ast.Field(chain=["total_count"]),
             ],
-            select_from=ast.JoinExpr(table=ast.SelectQuery.model_validate(fourth_select)),
+            select_from=ast.JoinExpr(table=fourth_select),
             where=ast.CompareOperation(
                 left=ast.Field(chain=["rn"]), right=ast.Constant(value=limit_value), op=ast.CompareOperationOp.LtEq
             ),
