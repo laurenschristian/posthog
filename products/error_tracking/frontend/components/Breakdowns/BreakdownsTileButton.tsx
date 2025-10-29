@@ -5,10 +5,9 @@ import { Spinner } from '@posthog/lemon-ui'
 import { cn } from 'lib/utils/css-classes'
 
 import { DataNodeLogicProps } from '~/queries/nodes/DataNode/dataNodeLogic'
-import { InsightQueryNode } from '~/queries/schema/schema-general'
-import { FilterLogicalOperator } from '~/types'
+import { ErrorTrackingBreakdownsQuery } from '~/queries/schema/schema-general'
 
-import { errorTrackingIssueBreakdownQuery } from '../../queries'
+import { errorTrackingBreakdownsQuery } from '../../queries'
 import { errorTrackingIssueSceneLogic } from '../../scenes/ErrorTrackingIssueScene/errorTrackingIssueSceneLogic'
 import { BreakdownsStackedBar } from './BreakdownsStackedBar'
 import { breakdownFiltersLogic } from './breakdownFiltersLogic'
@@ -33,12 +32,11 @@ export function BreakdownsTileButton({ item }: BreakdownsTileButtonProps): JSX.E
 
     const isSelected = category === 'breakdowns' && breakdownProperty === item.property
 
-    const query = errorTrackingIssueBreakdownQuery({
-        breakdownProperty: item.property,
+    const query = errorTrackingBreakdownsQuery({
+        issueId,
+        breakdownProperties: [item.property],
         dateRange: dateRange,
         filterTestAccounts: filterTestAccounts,
-        filterGroup: { type: FilterLogicalOperator.And, values: [{ type: FilterLogicalOperator.And, values: [] }] },
-        issueId,
     })
 
     return (
@@ -52,7 +50,7 @@ export function BreakdownsTileButton({ item }: BreakdownsTileButtonProps): JSX.E
                 isSelected ? 'border-l-brand-yellow' : 'border-l-transparent'
             )}
         >
-            <BreakdownPreview query={query.source} title={item.title} property={item.property} />
+            <BreakdownPreview query={query} title={item.title} property={item.property} />
         </button>
     )
 }
@@ -62,7 +60,7 @@ function BreakdownPreview({
     title,
     property,
 }: {
-    query: InsightQueryNode
+    query: ErrorTrackingBreakdownsQuery
     title: string
     property: string
 }): JSX.Element {

@@ -1,9 +1,8 @@
 import { actions, connect, kea, key, path, props, reducers, selectors } from 'kea'
 
-import { DateRange, InsightVizNode } from '~/queries/schema/schema-general'
-import { FilterLogicalOperator } from '~/types'
+import { DateRange, ErrorTrackingBreakdownsQuery } from '~/queries/schema/schema-general'
 
-import { errorTrackingIssueBreakdownQuery } from '../../queries'
+import { errorTrackingBreakdownsQuery } from '../../queries'
 import { breakdownFiltersLogic } from './breakdownFiltersLogic'
 import type { errorTrackingBreakdownsLogicType } from './errorTrackingBreakdownsLogicType'
 
@@ -38,20 +37,16 @@ export const errorTrackingBreakdownsLogic = kea<errorTrackingBreakdownsLogicType
                 dateRange: DateRange,
                 filterTestAccounts: boolean,
                 issueId: string
-            ): InsightVizNode | null => {
+            ): ErrorTrackingBreakdownsQuery | null => {
                 if (!breakdownProperty) {
                     return null
                 }
 
-                return errorTrackingIssueBreakdownQuery({
-                    breakdownProperty,
+                return errorTrackingBreakdownsQuery({
+                    issueId,
+                    breakdownProperties: [breakdownProperty],
                     dateRange,
                     filterTestAccounts,
-                    filterGroup: {
-                        type: FilterLogicalOperator.And,
-                        values: [{ type: FilterLogicalOperator.And, values: [] }],
-                    },
-                    issueId,
                 })
             },
         ],

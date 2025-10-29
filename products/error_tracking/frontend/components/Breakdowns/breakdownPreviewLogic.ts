@@ -27,11 +27,11 @@ export const breakdownPreviewLogic = kea<breakdownPreviewLogicType>([
                 const breakdownData: BreakdownSinglePropertyStat[] = []
 
                 if (response && 'results' in response && Array.isArray(response.results)) {
-                    response.results.forEach((series: any) => {
-                        if (series.data && series.label) {
+                    response.results.forEach((result: any) => {
+                        if (result.breakdown_value && result.count) {
                             breakdownData.push({
-                                label: series.label,
-                                count: series.aggregated_value,
+                                label: result.breakdown_value,
+                                count: result.count,
                             })
                         }
                     })
@@ -41,9 +41,17 @@ export const breakdownPreviewLogic = kea<breakdownPreviewLogicType>([
             },
         ],
         totalCount: [
-            (s) => [s.properties],
-            (properties): number => {
-                return properties.reduce((sum, item) => sum + item.count, 0)
+            (s) => [s.response],
+            (response): number => {
+                if (
+                    response &&
+                    'results' in response &&
+                    Array.isArray(response.results) &&
+                    response.results.length > 0
+                ) {
+                    return response.results[0]?.total_count || 0
+                }
+                return 0
             },
         ],
     })),
