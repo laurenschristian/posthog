@@ -4,40 +4,23 @@ import { Spinner } from '@posthog/lemon-ui'
 
 import { cn } from 'lib/utils/css-classes'
 
-import { DataNodeLogicProps } from '~/queries/nodes/DataNode/dataNodeLogic'
-import { ErrorTrackingBreakdownsQuery } from '~/queries/schema/schema-general'
-
-import { errorTrackingBreakdownsQuery } from '../../queries'
 import { errorTrackingIssueSceneLogic } from '../../scenes/ErrorTrackingIssueScene/errorTrackingIssueSceneLogic'
 import { BreakdownsStackedBar } from './BreakdownsStackedBar'
 import { breakdownFiltersLogic } from './breakdownFiltersLogic'
-import { breakdownPreviewLogic } from './breakdownPreviewLogic'
-import {
-    BreakdownPreset,
-    ERROR_TRACKING_BREAKDOWNS_DATA_COLLECTION_NODE_ID,
-    POSTHOG_BREAKDOWN_NULL_VALUE,
-} from './consts'
-import { errorTrackingBreakdownsLogic } from './errorTrackingBreakdownsLogic'
+import { BreakdownPreset, POSTHOG_BREAKDOWN_NULL_VALUE } from './consts'
+import { miniBreakdownsLogic } from './miniBreakdownsLogic'
 
 interface BreakdownsTileButtonProps {
     item: BreakdownPreset
 }
 
 export function BreakdownsTileButton({ item }: BreakdownsTileButtonProps): JSX.Element {
-    const { dateRange, filterTestAccounts } = useValues(breakdownFiltersLogic)
-    const { breakdownProperty, issueId } = useValues(errorTrackingBreakdownsLogic)
-    const { setBreakdownProperty } = useActions(errorTrackingBreakdownsLogic)
+    const { breakdownProperty } = useValues(breakdownFiltersLogic)
+    const { setBreakdownProperty } = useActions(breakdownFiltersLogic)
     const { category } = useValues(errorTrackingIssueSceneLogic)
     const { setCategory } = useActions(errorTrackingIssueSceneLogic)
 
     const isSelected = category === 'breakdowns' && breakdownProperty === item.property
-
-    const query = errorTrackingBreakdownsQuery({
-        issueId,
-        breakdownProperties: [item.property],
-        dateRange: dateRange,
-        filterTestAccounts: filterTestAccounts,
-    })
 
     return (
         <button
@@ -50,28 +33,14 @@ export function BreakdownsTileButton({ item }: BreakdownsTileButtonProps): JSX.E
                 isSelected ? 'border-l-brand-yellow' : 'border-l-transparent'
             )}
         >
-            <BreakdownPreview query={query} title={item.title} property={item.property} />
+            <BreakdownPreview title={item.title} property={item.property} />
         </button>
     )
 }
 
-function BreakdownPreview({
-    query,
-    title,
-    property,
-}: {
-    query: ErrorTrackingBreakdownsQuery
-    title: string
-    property: string
-}): JSX.Element {
-    const key = `BreakdownPreview.${title}`
-    const dataNodeLogicProps: DataNodeLogicProps = {
-        query: query,
-        key: key,
-        dataNodeCollectionId: ERROR_TRACKING_BREAKDOWNS_DATA_COLLECTION_NODE_ID,
-    }
-    const logic = breakdownPreviewLogic({ dataNodeLogicProps })
-    const { properties, totalCount, responseLoading } = useValues(logic)
+function BreakdownPreview({ title, property }: { title: string; property: string }): JSX.Element {
+    const { getBreakdownForProperty, responseLoading } = useValues(miniBreakdownsLogic)
+    const { properties, totalCount } = getBreakdownForProperty(property)
 
     const hasOnlyNullBreakdown = properties.length === 1 && properties[0].label === POSTHOG_BREAKDOWN_NULL_VALUE
 
