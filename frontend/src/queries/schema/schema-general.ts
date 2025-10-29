@@ -2358,11 +2358,9 @@ export type SimilarIssue = {
     first_seen: string
 }
 
-export type BreakdownResult = {
-    breakdown_property: string
+export type BreakdownValue = {
     breakdown_value: string
     count: number
-    total_count: number
 }
 
 export interface ErrorTrackingSimilarIssuesQueryResponse extends AnalyticsQueryResponseBase {
@@ -2374,7 +2372,7 @@ export interface ErrorTrackingSimilarIssuesQueryResponse extends AnalyticsQueryR
 export type CachedErrorTrackingSimilarIssuesQueryResponse = CachedQueryResponse<ErrorTrackingSimilarIssuesQueryResponse>
 
 export interface ErrorTrackingBreakdownsQueryResponse extends AnalyticsQueryResponseBase {
-    results: BreakdownResult[]
+    results: Record<string, { values: BreakdownValue[]; total_count: number }>
 }
 export type CachedErrorTrackingBreakdownsQueryResponse = CachedQueryResponse<ErrorTrackingBreakdownsQueryResponse>
 

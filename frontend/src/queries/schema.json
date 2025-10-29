@@ -2479,25 +2479,6 @@
                 }
             ]
         },
-        "BreakdownResult": {
-            "additionalProperties": false,
-            "properties": {
-                "breakdown_property": {
-                    "type": "string"
-                },
-                "breakdown_value": {
-                    "type": "string"
-                },
-                "count": {
-                    "type": "number"
-                },
-                "total_count": {
-                    "type": "number"
-                }
-            },
-            "required": ["breakdown_property", "breakdown_value", "count", "total_count"],
-            "type": "object"
-        },
         "BreakdownType": {
             "enum": [
                 "cohort",
@@ -2512,6 +2493,19 @@
                 "revenue_analytics"
             ],
             "type": "string"
+        },
+        "BreakdownValue": {
+            "additionalProperties": false,
+            "properties": {
+                "breakdown_value": {
+                    "type": "string"
+                },
+                "count": {
+                    "type": "number"
+                }
+            },
+            "required": ["breakdown_value", "count"],
+            "type": "object"
         },
         "BreakdownValueInt": {
             "$ref": "#/definitions/integer"
@@ -2922,10 +2916,23 @@
                     "description": "The date range used for the query"
                 },
                 "results": {
-                    "items": {
-                        "$ref": "#/definitions/BreakdownResult"
+                    "additionalProperties": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "total_count": {
+                                "type": "number"
+                            },
+                            "values": {
+                                "items": {
+                                    "$ref": "#/definitions/BreakdownValue"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "required": ["values", "total_count"],
+                        "type": "object"
                     },
-                    "type": "array"
+                    "type": "object"
                 },
                 "timezone": {
                     "type": "string"
@@ -10878,10 +10885,23 @@
                     "description": "The date range used for the query"
                 },
                 "results": {
-                    "items": {
-                        "$ref": "#/definitions/BreakdownResult"
+                    "additionalProperties": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "total_count": {
+                                "type": "number"
+                            },
+                            "values": {
+                                "items": {
+                                    "$ref": "#/definitions/BreakdownValue"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "required": ["values", "total_count"],
+                        "type": "object"
                     },
-                    "type": "array"
+                    "type": "object"
                 },
                 "timings": {
                     "description": "Measured timings for different parts of the query generation process",
@@ -19632,10 +19652,23 @@
                             "description": "The date range used for the query"
                         },
                         "results": {
-                            "items": {
-                                "$ref": "#/definitions/BreakdownResult"
+                            "additionalProperties": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "total_count": {
+                                        "type": "number"
+                                    },
+                                    "values": {
+                                        "items": {
+                                            "$ref": "#/definitions/BreakdownValue"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "required": ["values", "total_count"],
+                                "type": "object"
                             },
-                            "type": "array"
+                            "type": "object"
                         },
                         "timings": {
                             "description": "Measured timings for different parts of the query generation process",

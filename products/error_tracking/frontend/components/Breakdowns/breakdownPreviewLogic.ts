@@ -20,21 +20,24 @@ export const breakdownPreviewLogic = kea<breakdownPreviewLogicType>([
     connect((props: BreakdownPreviewLogicProps) => ({
         values: [dataNodeLogic(props.dataNodeLogicProps), ['response', 'responseLoading']],
     })),
-    selectors(() => ({
+    selectors(({ props }) => ({
         properties: [
             (s) => [s.response],
             (response): BreakdownSinglePropertyStat[] => {
                 const breakdownData: BreakdownSinglePropertyStat[] = []
 
-                if (response && 'results' in response && Array.isArray(response.results)) {
-                    response.results.forEach((result: any) => {
-                        if (result.breakdown_value && result.count) {
+                if (response && 'results' in response && typeof response.results === 'object') {
+                    // Get the breakdown property from the query
+                    const breakdownProperty = props.dataNodeLogicProps.query?.breakdownProperties?.[0]
+                    if (breakdownProperty && response.results[breakdownProperty]) {
+                        const propertyData = response.results[breakdownProperty]
+                        propertyData.values.forEach((value: any) => {
                             breakdownData.push({
-                                label: result.breakdown_value,
-                                count: result.count,
+                                label: value.breakdown_value,
+                                count: value.count,
                             })
-                        }
-                    })
+                        })
+                    }
                 }
 
                 return breakdownData
@@ -43,13 +46,12 @@ export const breakdownPreviewLogic = kea<breakdownPreviewLogicType>([
         totalCount: [
             (s) => [s.response],
             (response): number => {
-                if (
-                    response &&
-                    'results' in response &&
-                    Array.isArray(response.results) &&
-                    response.results.length > 0
-                ) {
-                    return response.results[0]?.total_count || 0
+                if (response && 'results' in response && typeof response.results === 'object') {
+                    // Get the breakdown property from the query
+                    const breakdownProperty = props.dataNodeLogicProps.query?.breakdownProperties?.[0]
+                    if (breakdownProperty && response.results[breakdownProperty]) {
+                        return response.results[breakdownProperty].total_count || 0
+                    }
                 }
                 return 0
             },

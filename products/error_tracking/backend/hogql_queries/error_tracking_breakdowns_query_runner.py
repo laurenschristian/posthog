@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo
 import structlog
 
 from posthog.schema import (
-    BreakdownResult,
     CachedErrorTrackingBreakdownsQueryResponse,
     ErrorTrackingBreakdownsQuery,
     ErrorTrackingBreakdownsQueryResponse,
@@ -222,18 +221,21 @@ class ErrorTrackingBreakdownsQueryRunner(AnalyticsQueryRunner[ErrorTrackingBreak
                 limit_context=self.limit_context,
             )
 
-        results = [
-            BreakdownResult(
-                breakdown_property=str(row[0]),
-                breakdown_value=str(row[1]),
-                count=int(row[2]),
-                total_count=int(row[3]),
-            )
-            for row in query_result.results
-        ]
+        # Group results by breakdown_property
+        grouped_results: dict[str, dict] = {}
+        for row in query_result.results:
+            breakdown_property = str(row[0])
+            breakdown_value = str(row[1])
+            count = int(row[2])
+            total_count = int(row[3])
+
+            if breakdown_property not in grouped_results:
+                grouped_results[breakdown_property] = {"values": [], "total_count": total_count}
+
+            grouped_results[breakdown_property]["values"].append({"breakdown_value": breakdown_value, "count": count})
 
         return ErrorTrackingBreakdownsQueryResponse(
-            results=results,
+            results=grouped_results,
             timings=query_result.timings,
             hogql=query_result.hogql,
             modifiers=self.modifiers,

@@ -489,16 +489,6 @@ class BreakdownAttributionType(StrEnum):
     STEP = "step"
 
 
-class BreakdownResult(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    breakdown_property: str
-    breakdown_value: str
-    count: float
-    total_count: float
-
-
 class BreakdownType(StrEnum):
     COHORT = "cohort"
     PERSON = "person"
@@ -510,6 +500,22 @@ class BreakdownType(StrEnum):
     DATA_WAREHOUSE = "data_warehouse"
     DATA_WAREHOUSE_PERSON_PROPERTY = "data_warehouse_person_property"
     REVENUE_ANALYTICS = "revenue_analytics"
+
+
+class BreakdownValue(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    breakdown_value: str
+    count: float
+
+
+class Results(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    total_count: float
+    values: list[BreakdownValue]
 
 
 class CompareItem(BaseModel):
@@ -6370,7 +6376,7 @@ class CachedErrorTrackingBreakdownsQueryResponse(BaseModel):
     resolved_date_range: Optional[ResolvedDateRangeResponse] = Field(
         default=None, description="The date range used for the query"
     )
-    results: list[BreakdownResult]
+    results: dict[str, Results]
     timezone: str
     timings: Optional[list[QueryTiming]] = Field(
         default=None, description="Measured timings for different parts of the query generation process"
@@ -8746,7 +8752,7 @@ class ErrorTrackingBreakdownsQueryResponse(BaseModel):
     resolved_date_range: Optional[ResolvedDateRangeResponse] = Field(
         default=None, description="The date range used for the query"
     )
-    results: list[BreakdownResult]
+    results: dict[str, Results]
     timings: Optional[list[QueryTiming]] = Field(
         default=None, description="Measured timings for different parts of the query generation process"
     )
@@ -10086,7 +10092,7 @@ class QueryResponseAlternative15(BaseModel):
     resolved_date_range: Optional[ResolvedDateRangeResponse] = Field(
         default=None, description="The date range used for the query"
     )
-    results: list[BreakdownResult]
+    results: dict[str, Results]
     timings: Optional[list[QueryTiming]] = Field(
         default=None, description="Measured timings for different parts of the query generation process"
     )
